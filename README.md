@@ -61,8 +61,12 @@ HyperMesh-Dev/
 
 Open HyperMesh 2023 Command Window and type:
 ```tcl
-source {C:/Users/13378/Desktop/HyperMesh-Dev/scripts/01_hello_hypermesh.tcl}
+source {<your_path>/HyperMesh-Dev/scripts/01_hello_hypermesh.tcl}
 ```
+
+Replace `<your_path>` with the actual folder path on your machine, e.g.:
+- Windows: `C:/Users/YourName/Desktop`
+- macOS: `/Users/YourName/Desktop`
 
 ## Study Plan
 

@@ -3,7 +3,7 @@
 # Purpose : TCL Proc - definition, parameters, scope, error handling
 # Date    : 2026-03-16
 # Version : HyperMesh 2023 (TCL 8.5.9)
-# Usage   : source {C:/Users/13378/Desktop/HyperMesh-Dev/scripts/04_tcl_proc.tcl}
+# Usage   : source {<your_path>/HyperMesh-Dev/scripts/04_tcl_proc.tcl}
 # =============================================================
 
 # Clear all procs defined in this script to avoid stale definitions on re-source
