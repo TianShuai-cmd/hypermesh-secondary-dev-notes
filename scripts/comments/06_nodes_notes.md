@@ -52,11 +52,22 @@ hm_getmark nodes 1                 ;# 获取标记集合1中的ID列表
 
 ## 第四部分：移动节点
 
+HyperMesh 2023 TCL 没有直接的节点移动命令，需要删除后重建：
+
 ```tcl
-# *nodesmove 参数：标记集合ID 坐标系ID dx dy dz
-# 将标记集合中的所有节点平移 (dx, dy, dz)
+# 读取原坐标
+set x [hm_getvalue node id=5 dataname=x]
+set y [hm_getvalue node id=5 dataname=y]
+set z [hm_getvalue node id=5 dataname=z]
+
+# 删除原节点
+*clearmark nodes 1
 *createmark nodes 1 5
-*nodesmove 1 0 0.0 0.0 10.0   ;# 将节点5沿Z轴移动10
+*deleteidrange nodes 1
+
+# 在新坐标重建（注意：ID会变）
+set new_z [expr {$z + 10.0}]
+*createnode $x $y $new_z 0 0 0
 ```
 
 ---
@@ -75,10 +86,10 @@ set near_nodes [hm_getmark nodes 1]
 ## 第六部分：合并重复节点
 
 ```tcl
-# *mergenodes 参数：标记集合ID 容差
-# 将距离小于容差的节点合并为一个
+# *equivalence nodes：合并距离小于容差的节点
+# 语法：*equivalence nodes <标记集合ID> <容差>
 *createmark nodes 1 "all"
-*mergenodes 1 0.01   ;# 容差 0.01，距离小于此值的节点合并
+*equivalence nodes 1 0.01   ;# 容差 0.01，距离小于此值的节点合并
 ```
 
 ---
@@ -86,9 +97,11 @@ set near_nodes [hm_getmark nodes 1]
 ## 第七部分：删除节点
 
 ```tcl
+# *deleteidrange：HyperMesh 2023 中正确的节点删除命令
 # 先标记，再删除
+*clearmark nodes 1
 *createmark nodes 1 5
-*deletemark nodes 1
+*deleteidrange nodes 1
 ```
 
 ---
@@ -105,19 +118,20 @@ set near_nodes [hm_getmark nodes 1]
 | `*createmark nodes 1 "by sphere" cx cy cz r` | 按坐标范围标记 |
 | `hm_getmark nodes 1` | 获取标记列表 |
 | `*clearmark nodes 1` | 清除标记 |
-| `*nodesmove 1 0 dx dy dz` | 平移标记节点 |
-| `*mergenodes 1 tolerance` | 合并重复节点 |
-| `*deletemark nodes 1` | 删除标记节点 |
+| `*deleteidrange nodes 1` | 删除标记节点（正确命令）|
+| `*equivalence nodes 1 tolerance` | 合并重复节点（正确命令）|
+| `*collectorcreate comps name {}` | 创建组件 |
+| `*currentcollector comps name` | 设置当前组件 |
 
 ---
 
-## Mark 机制说明
+## 踩坑记录
 
-HyperMesh 的操作流程通常是：
-```
-1. *createmark 选中目标实体
-2. 执行操作命令（移动、删除、网格等）
-3. *clearmark 清除标记（可选）
-```
-
-这和手动操作时"先选中再操作"的逻辑完全一致。
+| 问题 | 原因 | 解决方案 |
+|------|------|----------|
+| `*deletemark nodes 1` 报错 | HyperMesh 2023 不支持此命令删除节点 | 改用 `*deleteidrange nodes 1` |
+| `*modent_deletebymark nodes 1` 报错 | 同上 | 改用 `*deleteidrange nodes 1` |
+| `*nodesmove` 不存在 | HyperMesh 2023 无此命令 | 删除节点后在新坐标重建（ID会变）|
+| `*mergenodes` 不存在 | HyperMesh 2023 无此命令 | 改用 `*equivalence nodes 1 tol` |
+| `*createentity comps name="x"` 报错 | 语法不对 | 改用 `*collectorcreate comps name {}` |
+| `*setcurrentcollector` 不存在 | HyperMesh 2023 无此命令 | 改用 `*currentcollector comps name` |
