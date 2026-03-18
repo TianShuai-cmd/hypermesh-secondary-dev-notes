@@ -1,11 +1,12 @@
 # =============================================================
 # Script  : 10_mesh_2d.tcl
-# Purpose : HyperMesh 2D Mesh - create surface and auto mesh
+# Purpose : HyperMesh 2D Mesh - create surface and manual mesh
 # Date    : 2026-03-17
 # Version : HyperMesh 2023 (TCL 8.5.9)
 # Usage   : source {<your_path>/HyperMesh-Dev/scripts/10_mesh_2d.tcl}
-# Note    : *automesh requires GUI mode - run in HyperMesh, not hmbatch
 # =============================================================
+
+*deletemodel
 
 puts "=============================="
 puts " HyperMesh 2D Mesh"
@@ -13,101 +14,89 @@ puts "=============================="
 
 
 # ============================================================
-# Part 1: Create a surface from nodes
+# Part 1: Create component and nodes
 # ============================================================
 puts ""
-puts "--- 1. Create Surface ---"
+puts "--- 1. Create Nodes ---"
 
-*collectorcreate comps Shell_Part {}
-*currentcollector comps Shell_Part
+*collectorcreate comps Mesh_Test {}
+*currentcollector comps Mesh_Test
 
-# Create boundary nodes for a 200x100 rectangle
+# Create 4 corner nodes of a 100x100 square
 *createnode 0   0   0 0 0 0
-*createnode 200 0   0 0 0 0
-*createnode 200 100 0 0 0 0
+*createnode 100 0   0 0 0 0
+*createnode 100 100 0 0 0 0
 *createnode 0   100 0 0 0 0
 
 set nids [hm_entitylist nodes id]
-puts "  Created [llength $nids] boundary nodes"
-
-# Create surface using spline through nodes
-# *surfacesplineonnodesloop: creates surface from closed node loop
-*createlist nodes 1 [lindex $nids 0] [lindex $nids 1] [lindex $nids 2] [lindex $nids 3]
-*surfacesplineonnodesloop 1 0 0
-
-set surf_ids [hm_entitylist surfs id]
-puts "  Created [llength $surf_ids] surface(s)"
+puts "  Created [llength $nids] boundary nodes: $nids"
 
 
 # ============================================================
-# Part 2: Auto mesh the surface
+# Part 2: Create surface from node loop
 # ============================================================
 puts ""
-puts "--- 2. Auto Mesh ---"
+puts "--- 2. Create Surface ---"
 
-# *automesh syntax: *automesh <surf_mark_id> <mesh_size> <mesh_type>
-# mesh_type: 1=mixed, 2=quads only, 3=trias only
-# Must run in GUI mode (not hmbatch)
+# Create surface from 4 corner nodes
+set n1 [lindex $nids 0]
+set n2 [lindex $nids 1]
+set n3 [lindex $nids 2]
+set n4 [lindex $nids 3]
 
-*createmark surfs 1 "all"
-set surf_count [llength [hm_getmark surfs 1]]
-puts "  Surfaces to mesh: $surf_count"
-puts "  Mesh size: 10"
-puts "  Mesh type: 1 (mixed quad/tria)"
+*createlist nodes 1 $n1 $n2 $n3 $n4
+*surfacesplineonnodesloop 1 0 0
 
-# Execute automesh
-*automesh 1 10 1
+set surfs [hm_entitylist surfs id]
+puts "  Created surface: $surfs"
+
+
+# ============================================================
+# Part 3: Manual mesh - create quad elements
+# ============================================================
+puts ""
+puts "--- 3. Manual Mesh ---"
+
+# Get fresh node list after surface creation
+set node_list [hm_entitylist nodes id]
+puts "  Current nodes: $node_list"
+
+# Need at least 4 nodes for a single quad, or create more for mesh
+if {[llength $node_list] >= 4} {
+    set n1 [lindex $node_list 0]
+    set n2 [lindex $node_list 1]
+    set n3 [lindex $node_list 2]
+    set n4 [lindex $node_list 3]
+    
+    # Create one quad element using first 4 nodes
+    *createlist nodes 1 $n1 $n2 $n3 $n4
+    *createelement 104 1 1 1
+    
+    puts "  Created 1 quad element"
+}
 
 set elem_count [llength [hm_entitylist elems id]]
 set node_count [llength [hm_entitylist nodes id]]
-puts "  After mesh: $elem_count elements, $node_count nodes"
+puts "  Total nodes: $node_count"
+puts "  Total elems: $elem_count"
 
 
 # ============================================================
-# Part 3: Check mesh quality after meshing
-# ============================================================
-puts ""
-puts "--- 3. Mesh Quality ---"
-
-*createmark elems 2 "all"
-set asp [hm_getelemcheckvalues 2 2 aspect]
-puts "  Aspect ratio results (id value ...): $asp"
-
-set skw [hm_getelemcheckvalues 2 2 skew]
-puts "  Skew results (id value ...): $skw"
-
-
-# ============================================================
-# Part 4: Mesh size control
+# Part 4: Mesh quality check
 # ============================================================
 puts ""
-puts "--- 4. Mesh with Different Size ---"
+puts "--- 4. Mesh Quality ---"
 
-# Delete existing mesh first
-*createmark elems 1 "all"
-*deletemark elems 1
-
-# Re-mesh with finer size
-*createmark surfs 1 "all"
-*automesh 1 5 2   ;# size=5, quads only
-
-set elem_count2 [llength [hm_entitylist elems id]]
-puts "  After fine mesh (size=5): $elem_count2 elements"
+if {$elem_count > 0} {
+    *createmark elems 2 "all"
+    set asp [hm_getelemcheckvalues 2 2 aspect]
+    set skw [hm_getelemcheckvalues 2 2 skew]
+    puts "  Aspect ratio: $asp"
+    puts "  Skew: $skw"
+}
 
 
 puts ""
 puts "=============================="
 puts " Done."
 puts "=============================="
-
-# =============================================================
-# Summary:
-# 1. *surfacesplineonnodesloop 1 0 0  -> create surface from node loop
-# 2. *createmark surfs 1 "all"        -> mark all surfaces
-# 3. *automesh 1 <size> <type>        -> auto mesh marked surfaces
-#    type: 1=mixed  2=quads  3=trias
-# 4. hm_getelemcheckvalues 2 2 aspect -> quality check (mark2, 2D)
-# 5. *deletemark elems 1              -> delete all elements
-# Pitfall: *automesh requires GUI mode, will crash in hmbatch
-#          Always run mesh scripts inside HyperMesh GUI
-# =============================================================

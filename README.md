@@ -46,10 +46,10 @@ HyperMesh-Dev/
 | 11_mesh_quality.tcl | Mesh quality check | ✅ | 2026-03-17 | Batch |
 | 12_import_export.tcl | HM file save/read, FEM export | ✅ | 2026-03-17 | Mixed |
 | 13_mark_filter.tcl | Mark & filter advanced | ✅ | 2026-03-17 | Batch |
-| 14_python_basics.py | Python hm module | ⬜ | | |
-| 15_python_csv_import.py | CSV data import | ⬜ | | |
-| 16_python_export_report.py | Export report | ⬜ | | |
-| 17_python_gui.py | Tkinter GUI | ⬜ | | |
+| 14_python_basics.py | Python + hmbatch integration | ✅ | 2026-03-18 | Python |
+| 15_python_csv_import.py | CSV data import | ✅ | 2026-03-18 | Python |
+| 16_python_export_report.py | Export report | ✅ | 2026-03-18 | Python |
+| 17_python_gui.py | Tkinter GUI | ✅ | 2026-03-18 | Python |
 | 18_quality_report.tcl | Project: quality report | ⬜ | | |
 | 19_parametric_plate.tcl | Project: parametric modeling | ⬜ | | |
 | 20_model_info_tool.py | Project: model info tool | ⬜ | | |
